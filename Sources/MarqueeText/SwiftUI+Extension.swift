@@ -18,15 +18,19 @@ extension View {
         perform action: @escaping (_ oldValue: T, _ newValue: T) -> Void
     ) -> some View {
         if #available(iOS 17.0, *) {
-            self.onChange(of: value, initial: initial, perform: action)
+            // iOS 17+: closure takes (oldValue, newValue)
+            self.onChange(of: value, initial: initial, action)
         } else if #available(iOS 14.0, *) {
+            // iOS 14–16: closure only gives newValue
             self.onChange(of: value) { newValue in
-                action(value, newValue) // ⚠️ oldValue isn’t available pre-iOS 17
+                action(value, newValue) // you’ll have to fake oldValue here
             }
         } else {
+            // Fallback (pre-iOS 14): observe via Combine
             self.onReceive(Just(value)) { newValue in
-                action(value, newValue) // again, oldValue isn’t tracked here
+                action(value, newValue)
             }
         }
     }
 }
+
