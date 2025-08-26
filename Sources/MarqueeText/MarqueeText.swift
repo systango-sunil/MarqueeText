@@ -58,8 +58,8 @@ public struct MarqueeText: View {
                     // MARK: - Non-scrolling version
                     Text(text)
                         .font(.init(font))
-                        .onChange(of: text) { _, _ in
-                            self.animate = false // No scrolling needed
+                        .onChange(of: text) { _ in
+                            self.animate = false
                         }
                         .frame(
                             minWidth: 0,
@@ -74,7 +74,7 @@ public struct MarqueeText: View {
                 // Trigger scrolling if needed
                 self.animate = needsScrolling
             }
-            .onChange(of: text) { _, newValue in
+            .onChange(of: text) { newValue in
                 let newStringWidth = newValue.widthOfString(usingFont: font)
                 if newStringWidth > geo.size.width {
                     // Stop the old animation first
