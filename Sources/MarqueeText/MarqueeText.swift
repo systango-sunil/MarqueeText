@@ -5,7 +5,7 @@ public struct MarqueeText: View {
     public var font: UIFont
     public var leftFade: CGFloat
     public var rightFade: CGFloat
-    public var pointsPerSecond: Double
+    public var pointsPerSecond: Double = 30
     public var startDelay: Double
     
     @State private var startTime: Date = Date()
@@ -23,7 +23,7 @@ public struct MarqueeText: View {
             
             ZStack {
                 if needsScrolling {
-                    HStack(spacing: 0) {
+                    HStack(spacing: 20) {
                         Text(text)
                             .font(.init(font))
                             .lineLimit(1)
