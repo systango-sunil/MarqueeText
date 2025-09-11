@@ -66,19 +66,23 @@ public struct MarqueeText: View {
     
     private func fadeMask(leftFade: CGFloat, rightFade: CGFloat) -> some View {
         HStack(spacing: 0) {
-            LinearGradient(
-                gradient: Gradient(colors: [.black.opacity(0), .black]),
-                startPoint: .leading, endPoint: .trailing
-            )
-            .frame(width: leftFade)
+            if leftFade > 0 {
+                LinearGradient(
+                    gradient: Gradient(colors: [.black.opacity(0), .black]),
+                    startPoint: .leading, endPoint: .trailing
+                )
+                .frame(width: leftFade)
+            }
             
             Color.black
             
-            LinearGradient(
-                gradient: Gradient(colors: [.black, .black.opacity(0)]),
-                startPoint: .leading, endPoint: .trailing
-            )
-            .frame(width: rightFade)
+            if rightFade > 0 {
+                LinearGradient(
+                    gradient: Gradient(colors: [.black, .black.opacity(0)]),
+                    startPoint: .leading, endPoint: .trailing
+                )
+                .frame(width: rightFade)
+            }
         }
     }
     
