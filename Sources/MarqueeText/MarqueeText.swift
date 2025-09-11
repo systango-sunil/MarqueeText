@@ -5,8 +5,8 @@ public struct MarqueeText: View {
     public var font: UIFont
     public var leftFade: CGFloat
     public var rightFade: CGFloat
-    public var startDelay: Double
     public var pointsPerSecond: Double
+    public var startDelay: Double
     
     @State private var animate = false
     
@@ -20,7 +20,7 @@ public struct MarqueeText: View {
             
             ZStack {
                 if needsScrolling {
-                    HStack(spacing: 40) { // small gap between repetitions
+                    HStack(spacing: 0) {
                         Text(text)
                             .font(.init(font))
                             .lineLimit(1)
@@ -31,17 +31,19 @@ public struct MarqueeText: View {
                             .lineLimit(1)
                             .fixedSize()
                     }
-                    .offset(x: animate ? -travelDistance : 0)
+                    .offset(x: animate ? -stringWidth - 40 : 0) // move by text width
                     .animation(
                         animate ?
-                            Animation.linear(duration: travelDistance / pointsPerSecond)
+                            Animation.linear(duration: (stringWidth + 40) / pointsPerSecond)
                                 .delay(startDelay)
                                 .repeatForever(autoreverses: false)
                             : .default,
                         value: animate
                     )
+                    .frame(width: geo.size.width, alignment: .leading) // clip to row width
                     .mask(
                         fadeMask(leftFade: leftFade, rightFade: rightFade)
+                            .frame(width: geo.size.width)
                     )
                 } else {
                     Text(text)
@@ -55,42 +57,38 @@ public struct MarqueeText: View {
         .frame(height: stringHeight)
     }
     
-    // MARK: - Fade mask
     private func fadeMask(leftFade: CGFloat, rightFade: CGFloat) -> some View {
         HStack(spacing: 0) {
             LinearGradient(
-                gradient: Gradient(colors: [Color.black.opacity(0), Color.black]),
-                startPoint: .leading,
-                endPoint: .trailing
+                gradient: Gradient(colors: [.black.opacity(0), .black]),
+                startPoint: .leading, endPoint: .trailing
             )
             .frame(width: leftFade)
             
             Color.black
             
             LinearGradient(
-                gradient: Gradient(colors: [Color.black, Color.black.opacity(0)]),
-                startPoint: .leading,
-                endPoint: .trailing
+                gradient: Gradient(colors: [.black, .black.opacity(0)]),
+                startPoint: .leading, endPoint: .trailing
             )
             .frame(width: rightFade)
         }
     }
     
-    // MARK: - Initializer
     public init(
         text: String,
         font: UIFont,
         leftFade: CGFloat = 16,
         rightFade: CGFloat = 16,
-        startDelay: Double = 1,
-        pointsPerSecond: Double = 30
+        pointsPerSecond: Double = 30,
+        startDelay: Double = 1
     ) {
         self.text = text
         self.font = font
         self.leftFade = leftFade
         self.rightFade = rightFade
-        self.startDelay = startDelay
         self.pointsPerSecond = pointsPerSecond
+        self.startDelay = startDelay
     }
 }
 
