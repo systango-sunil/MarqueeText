@@ -16,7 +16,8 @@ public struct MarqueeText: View {
         
         GeometryReader { geo in
             let needsScrolling = stringWidth > geo.size.width
-            let travelDistance = stringWidth + geo.size.width
+            let travelDistance = stringWidth + geo.size.width   // ✅ use correct distance
+            let duration = travelDistance / pointsPerSecond     // ✅ smooth speed
             
             ZStack {
                 if needsScrolling {
@@ -26,21 +27,21 @@ public struct MarqueeText: View {
                             .lineLimit(1)
                             .fixedSize()
                         
-                        Text(text)
+                        Text(text) // duplicate for seamless loop
                             .font(.init(font))
                             .lineLimit(1)
                             .fixedSize()
                     }
-                    .offset(x: animate ? -stringWidth - 40 : 0) // move by text width
+                    .offset(x: animate ? -travelDistance : 0) // ✅ travel full distance
                     .animation(
                         animate ?
-                            Animation.linear(duration: (stringWidth + 40) / pointsPerSecond)
+                            Animation.linear(duration: duration)
                                 .delay(startDelay)
                                 .repeatForever(autoreverses: false)
                             : .default,
                         value: animate
                     )
-                    .frame(width: geo.size.width, alignment: .leading) // clip to row width
+                    .frame(width: geo.size.width, alignment: .leading)
                     .mask(
                         fadeMask(leftFade: leftFade, rightFade: rightFade)
                             .frame(width: geo.size.width)
