@@ -7,6 +7,7 @@ public struct MarqueeText: View {
     public var rightFade: CGFloat
     public var startDelay: Double
     public var alignment: Alignment
+    public var pointsPerSecond: Double
     
     @State private var animate = false
     var isCompact = false
@@ -15,29 +16,26 @@ public struct MarqueeText: View {
         let stringWidth  = text.widthOfString(usingFont: font)
         let stringHeight = text.heightOfString(usingFont: font)
         
-        // Create our animations
-        let animation = Animation
-            .linear(duration: Double(stringWidth) / 30)
-            .delay(startDelay)
-            .repeatForever(autoreverses: false)
-        
-        let nullAnimation = Animation.linear(duration: 0)
-        
         GeometryReader { geo in
-            // Decide if scrolling is needed
             let needsScrolling = (stringWidth > geo.size.width)
             
             ZStack {
                 if needsScrolling {
-                    // MARK: - Scrolling (Marquee) version
+                    // total distance the text needs to travel
+                    let travelDistance = stringWidth + geo.size.width + 40
+                    
+                    let animation = Animation
+                        .linear(duration: travelDistance / pointsPerSecond)
+                        .delay(startDelay)
+                        .repeatForever(autoreverses: false)
+                    
+                    let nullAnimation = Animation.linear(duration: 0)
+                    
                     makeMarqueeTexts(
-                        stringWidth: stringWidth,
-                        stringHeight: stringHeight,
-                        geoWidth: geo.size.width,
+                        travelDistance: travelDistance,
                         animation: animation,
                         nullAnimation: nullAnimation
                     )
-                    // force left alignment when scrolling
                     .frame(
                         minWidth: 0,
                         maxWidth: .infinity,
@@ -55,40 +53,25 @@ public struct MarqueeText: View {
                     .frame(width: geo.size.width + leftFade)
                     .offset(x: -leftFade)
                 } else {
-                    // MARK: - Non-scrolling version
+                    // Non-scrolling case
                     Text(text)
                         .font(.init(font))
-                        .onValueChanged(of: text, initial: true) { oldValue, newValue in
-                            self.animate = false
-                        }
                         .frame(
                             minWidth: 0,
                             maxWidth: .infinity,
                             minHeight: 0,
                             maxHeight: .infinity,
-                            alignment: alignment // use alignment only if not scrolling
+                            alignment: alignment
                         )
                 }
             }
             .onAppear {
-                // Trigger scrolling if needed
                 self.animate = needsScrolling
             }
-            .onValueChanged(of: text, initial: true) { oldValue, newValue in
+            .onValueChanged(of: text, initial: true) { _, newValue in
                 let newStringWidth = newValue.widthOfString(usingFont: font)
-                if newStringWidth > geo.size.width {
-                    // Stop the old animation first
-                    self.animate = false
-                    
-                    // Kick off a new animation on the next runloop
-                    DispatchQueue.main.async {
-                        self.animate = true
-                    }
-                } else {
-                    self.animate = false
-                }
+                self.animate = newStringWidth > geo.size.width
             }
-
         }
         .frame(height: stringHeight)
         .frame(maxWidth: isCompact ? stringWidth : nil)
@@ -100,25 +83,22 @@ public struct MarqueeText: View {
     // MARK: - Marquee pair of texts
     @ViewBuilder
     private func makeMarqueeTexts(
-        stringWidth: CGFloat,
-        stringHeight: CGFloat,
-        geoWidth: CGFloat,
+        travelDistance: CGFloat,
         animation: Animation,
         nullAnimation: Animation
     ) -> some View {
-        // Two stacked texts moving across in opposite phases
         Group {
             Text(text)
                 .lineLimit(1)
                 .font(.init(font))
-                .offset(x: animate ? -stringWidth - stringHeight * 2 : 0)
+                .offset(x: animate ? -travelDistance : 0)
                 .animation(animate ? animation : nullAnimation, value: animate)
                 .fixedSize(horizontal: true, vertical: false)
             
             Text(text)
                 .lineLimit(1)
                 .font(.init(font))
-                .offset(x: animate ? 0 : stringWidth + stringHeight * 2)
+                .offset(x: animate ? 0 : travelDistance)
                 .animation(animate ? animation : nullAnimation, value: animate)
                 .fixedSize(horizontal: true, vertical: false)
         }
@@ -158,10 +138,11 @@ public struct MarqueeText: View {
     public init(
         text: String,
         font: UIFont,
-        leftFade: CGFloat,
-        rightFade: CGFloat,
-        startDelay: Double,
-        alignment: Alignment? = nil
+        leftFade: CGFloat = 16,
+        rightFade: CGFloat = 16,
+        startDelay: Double = 1,
+        alignment: Alignment? = nil,
+        pointsPerSecond: Double = 30
     ) {
         self.text      = text
         self.font      = font
@@ -169,6 +150,7 @@ public struct MarqueeText: View {
         self.rightFade = rightFade
         self.startDelay = startDelay
         self.alignment = alignment ?? .topLeading
+        self.pointsPerSecond = pointsPerSecond
     }
 }
 
