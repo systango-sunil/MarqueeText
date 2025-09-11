@@ -18,7 +18,7 @@ public struct MarqueeText: View {
         
         GeometryReader { geo in
             let needsScrolling = stringWidth > geo.size.width
-            let travelDistance = stringWidth + geo.size.width
+            let travelDistance = stringWidth
             let duration = travelDistance / pointsPerSecond
             
             ZStack {
