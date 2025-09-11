@@ -8,7 +8,9 @@ public struct MarqueeText: View {
     public var pointsPerSecond: Double
     public var startDelay: Double
     
-    @State private var animate = false
+    @State private var startTime: Date = Date()
+    @State private var now: Date = Date()
+    private let timer = Timer.publish(every: 1.0 / 60.0, on: .main, in: .common).autoconnect()
     
     public var body: some View {
         let stringWidth = text.widthOfString(usingFont: font)
@@ -16,8 +18,8 @@ public struct MarqueeText: View {
         
         GeometryReader { geo in
             let needsScrolling = stringWidth > geo.size.width
-            let travelDistance = stringWidth + geo.size.width   // ✅ use correct distance
-            let duration = travelDistance / pointsPerSecond     // ✅ smooth speed
+            let travelDistance = stringWidth + geo.size.width
+            let duration = travelDistance / pointsPerSecond
             
             ZStack {
                 if needsScrolling {
@@ -27,35 +29,39 @@ public struct MarqueeText: View {
                             .lineLimit(1)
                             .fixedSize()
                         
-                        Text(text) // duplicate for seamless loop
+                        Text(text)
                             .font(.init(font))
                             .lineLimit(1)
                             .fixedSize()
                     }
-                    .offset(x: animate ? -travelDistance : 0) // ✅ travel full distance
-                    .animation(
-                        animate ?
-                            Animation.linear(duration: duration)
-                                .delay(startDelay)
-                                .repeatForever(autoreverses: false)
-                            : .default,
-                        value: animate
-                    )
+                    .offset(x: -offset(for: now, travelDistance: travelDistance, duration: duration))
                     .frame(width: geo.size.width, alignment: .leading)
                     .mask(
                         fadeMask(leftFade: leftFade, rightFade: rightFade)
                             .frame(width: geo.size.width)
                     )
+                    .onReceive(timer) { newTime in
+                        now = newTime
+                    }
                 } else {
                     Text(text)
                         .font(.init(font))
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
             }
-            .onAppear { animate = needsScrolling }
-            .onDisappear { animate = false }
+            .onAppear {
+                startTime = Date().addingTimeInterval(startDelay)
+                now = Date()
+            }
         }
         .frame(height: stringHeight)
+    }
+    
+    private func offset(for time: Date, travelDistance: CGFloat, duration: Double) -> CGFloat {
+        let elapsed = max(0, time.timeIntervalSince(startTime))
+        guard duration > 0 else { return 0 }
+        let progress = elapsed.truncatingRemainder(dividingBy: duration)
+        return CGFloat(progress / duration) * travelDistance
     }
     
     private func fadeMask(leftFade: CGFloat, rightFade: CGFloat) -> some View {
